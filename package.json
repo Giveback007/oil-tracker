@@ -11,10 +11,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@giveback007/util-lib": "^0.22.4",
-    "puppeteer": "^9.1.1",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.4"
+    "@giveback007/util-lib": "0.22.4",
+    "puppeteer": "9.0.0",
+    "ts-node": "9.1.1",
+    "typescript": "4.2.4"
   },
   "devDependencies": {}
 }
