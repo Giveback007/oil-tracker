@@ -20,6 +20,7 @@ export function header() {
     }
     
     log(`
+    TEST TEST TEST
 || H - [Home]
 || R - [Refresh Data]
 || #### - [Select Truck]`);
