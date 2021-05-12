@@ -91,7 +91,7 @@ async function command(x: string) {
             return homeScreen();
         }
         case 'R': {
-            if (!isNumber(cmd2 || '')) return errorScreen(x);
+            if (cmd2 && !isNumber(cmd2)) return errorScreen(x);
 
             const trucks = await scrapeData(cmd2 ? Number(cmd2) : 0);
             const update = { ...data, trucks: { ...data.trucks } };
