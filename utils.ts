@@ -1,5 +1,5 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
-import { Dict } from '@giveback007/util-lib';
+import { Dict, sec, wait } from '@giveback007/util-lib';
 import { promises as fsPromises } from 'fs';
 import { Truck } from './types';
 import { getState } from './store';
@@ -21,7 +21,7 @@ const fillInput = async (page: Page, inp: string, txt: string) => {
 export const pageGoto = (page: Page, link: string) =>
     page.goto(link, { waitUntil: 'networkidle0' });
 
-export async function scrapePage(browser: Browser, email: string, pass: string) {
+export async function scrapePage(browser: Browser, email: string, pass: string, waitSec: number) {
     const state = getState();
     const page = await browser.newPage();
     await pageGoto(page, state.site);
@@ -32,8 +32,8 @@ export async function scrapePage(browser: Browser, email: string, pass: string) 
     await page.click("#login_button");
     await page.waitForNavigation({ waitUntil: 'networkidle0' });
 
-    // ps=1000 (loads 1k items)
-    // s=-1 (sort by date)
+    // SEARCH 1000 logs over past 8 days:
+    // ps=1000 (loads 1k items) // s=-1 (sort by date)
     await pageGoto(page, state.search);
 
     const arrDict = await page.evaluate(() => {
@@ -76,7 +76,7 @@ export async function scrapePage(browser: Browser, email: string, pass: string) 
 
     const data: Dict<Truck> = {};
     for (const tr in arrDict) {
-        const odo = await getOdo(page, arrDict[tr]);
+        const odo = await getOdo(page, arrDict[tr], waitSec);
         data[tr] = { ...arrDict[tr][0], odo };
     }
     
@@ -85,9 +85,22 @@ export async function scrapePage(browser: Browser, email: string, pass: string) 
 
 }
 
-async function getOdo(page: Page, tr: Truck[]) {
+async function getOdo(page: Page, tr: Truck[], waitSec: number) {
     for (const x of tr) {
         await pageGoto(page, x.link);
+        
+        // countdown:
+        if (waitSec) page.evaluate((waitSec: number) => {
+            const body = document.getElementsByTagName('body')[0];
+            const div = document.createElement("div");
+            body.appendChild(div);
+
+            (div as any).style = 'position: fixed; top: 0; right: 0; border: solid 3px black; z-index: 9999; padding: 10px 50px; font-size: 95px; background: white';
+            div.innerText = waitSec + '';
+            let i = waitSec;
+            setInterval(() => i ? div.innerText = (--i) + '' : null, 1000);
+        }, waitSec)
+        await wait(sec(waitSec));
 
         const odo = await page.evaluate(() => {
             const rows = document.querySelectorAll('#eld-ev-o-text-block table tbody tr');
@@ -99,7 +112,7 @@ async function getOdo(page: Page, tr: Truck[]) {
                 const odoStr = rows[i].querySelectorAll('td')[6].innerText || '';
                 odo = odoStr ? Number(odoStr) : 0;
             }
-
+    
             return odo;
         });
 
@@ -109,18 +122,19 @@ async function getOdo(page: Page, tr: Truck[]) {
     return 0;
 }
 
-export async function scrapeData() {
+export async function scrapeData(waitSec: number = 0) {
     const { _1, _2 } = getState();
 
     const browser = await puppeteer.launch({
         headless: false,
         defaultViewport: null,
+        args: ['--start-maximized']
         // executablePath: "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"
     });
 
     
-    const data1 = await scrapePage(browser, _1.email, _1.pass);
-    const data2 = await scrapePage(browser, _2.email, _2.pass);
+    const data1 = await scrapePage(browser, _1.email, _1.pass, waitSec);
+    const data2 = await scrapePage(browser, _2.email, _2.pass, waitSec);
 
     const data: Dict<Truck> = { ...data1, ...data2 };
 

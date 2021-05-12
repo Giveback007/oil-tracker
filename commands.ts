@@ -29,8 +29,10 @@ async function command(x: string) {
     const state = getState();
     const data = getData();
 
-    const cmd = x.toUpperCase();
-    switch (cmd) {
+    const cmds = x.split(' ');
+    const cmd1 = cmds[0].toUpperCase();
+    const cmd2 = cmds[1].toUpperCase();
+    switch (cmd1) {
         case 'N': {
             setState({ selScreen: "new-oil" });
             const tr = state.selTruck;
@@ -89,7 +91,9 @@ async function command(x: string) {
             return homeScreen();
         }
         case 'R': {
-            const trucks = await scrapeData();
+            if (!isNumber(cmd2)) return errorScreen(x);
+
+            const trucks = await scrapeData(cmd2 ? Number(cmd2) : 0);
             const update = { ...data, trucks: { ...data.trucks } };
 
             update.dataRefreshedOn = Date.now();
@@ -108,6 +112,6 @@ async function command(x: string) {
         case '': {
             if (getState().selScreen === "new-oil") return homeScreen();
         }
-        default: errorScreen(cmd);
+        default: errorScreen(cmd1);
     }
 }
