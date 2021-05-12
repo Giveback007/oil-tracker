@@ -31,7 +31,7 @@ async function command(x: string) {
 
     const cmds = x.split(' ');
     const cmd1 = cmds[0].toUpperCase();
-    const cmd2 = cmds[1].toUpperCase();
+    const cmd2 = cmds[1] ? cmds[1].toUpperCase() : null;
     switch (cmd1) {
         case 'N': {
             setState({ selScreen: "new-oil" });
@@ -91,7 +91,7 @@ async function command(x: string) {
             return homeScreen();
         }
         case 'R': {
-            if (!isNumber(cmd2)) return errorScreen(x);
+            if (!isNumber(cmd2 || '')) return errorScreen(x);
 
             const trucks = await scrapeData(cmd2 ? Number(cmd2) : 0);
             const update = { ...data, trucks: { ...data.trucks } };
